@@ -367,7 +367,6 @@
 
             /**
              * Trigger the call.
-             * This is the end of your chain loop.
              *
              * @example aja()
              *           .url('data.json')
@@ -383,8 +382,26 @@
 
                 //delegates to ajaGo
                 if(typeof ajaGo[type] === 'function'){
-                    return ajaGo[type].call(this, url);
+                    ajaGo[type].call(this, url);
                 }
+
+                return this;
+
+            },
+
+            /**
+             * Abort the call.
+             *
+             * @example aja()
+     *           .abort('data.json')
+     *           .on('200', function(res){
+     *               //Yeah !
+     *            })
+     *           .go()
+     *           .abort();
+             */
+            abort : function(){
+                return this._xhr.abort();
             }
         };
 
@@ -449,11 +466,14 @@
                 var request     = new XMLHttpRequest();
                 var _data       = data.data;
                 var body        = data.body;
+                var headers     = data.headers || {};
                 var contentType = this.header('Content-Type');
                 var timeout     = data.timeout;
                 var timeoutId;
                 var isUrlEncoded;
                 var openParams;
+
+                self._xhr = request;
 
                 //guess content type
                 if(!contentType && _data && _dataInBody()){
@@ -530,6 +550,12 @@
                     self.trigger('error', err, arguments);
                 };
 
+                request.onabort = function onRequestAbort (){
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                    }
+                };
+
                 //sets the timeout
                 if (timeout) {
                     timeoutId = setTimeout(function() {
@@ -543,6 +569,8 @@
 
                 //send the request
                 request.send(body);
+
+                return request;
             },
 
             /**
@@ -847,10 +875,7 @@
                 url += params;
             } else if (typeof params === 'object'){
                 for(key in params){
-                    if(!/[?&]$/.test(url)){
-                        url += '&';
-                    }
-                    url += encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+                    url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
                 }
             }
         }
@@ -859,8 +884,8 @@
     };
 
     //AMD, CommonJs, then globals
-    if (typeof window.define === 'function' && window.define.amd) {
-        window.define([], function(){
+    if (typeof define === 'function' && define.amd) {
+        define([], function(){
             return aja;
         });
     } else if (typeof exports === 'object') {
