@@ -393,12 +393,12 @@
              * Abort the call.
              *
              * @example aja()
-     *           .abort('data.json')
-     *           .on('200', function(res){
-     *               //Yeah !
-     *            })
-     *           .go()
-     *           .abort();
+             * .abort('data.json')
+             * .on('200', function(res){
+             *   //Yeah !
+             * })
+             * .go()
+             * .abort();
              */
             abort : function(){
                 return this._xhr.abort();
@@ -522,6 +522,12 @@
                 request.onprogress = function(e){
                     if (e.lengthComputable) {
                         self.trigger('progress', e.loaded / e.total);
+                    }
+                };
+
+                request.upload.onprogress = function(e){
+                    if (e.lengthComputable) {
+                        self.trigger('uploadProgress', e);
                     }
                 };
 
